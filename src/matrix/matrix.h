@@ -1,0 +1,1 @@
+void print_matrix(double *matrix, int img_size);
