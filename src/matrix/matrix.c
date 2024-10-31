@@ -70,3 +70,30 @@ void matrix_dot(double *vec, Matrix *matrix, double *out) {
         }
     }
 }
+
+void matrix_add(Matrix *a, Matrix *b, Matrix *out) {
+    if (a->cols != b->cols || a->rows != b->rows) {
+        printf("matrices sizes do not match!\n");
+        return;
+    }
+
+    for (int i = 0; i < a->rows; i++) {
+        for (int j = 0; j < a->rows; j++) {
+            out->data[i][j] = a->data[i][j] + b->data[i][j];
+        }
+    }
+}
+
+void matrix_multiply_by_constant(Matrix *matrix, double constant) {
+    for (int i = 0; i < matrix->rows; i++) {
+        for (int j = 0; j < matrix->cols; j++) {
+            matrix->data[i][j] *= constant;
+        }
+    }
+}
+
+void matrix_set(Matrix *matrix, double value) {
+    for (int i = 0; i < matrix->rows; i++) {
+        memset(matrix->data[i], 0, matrix->cols);
+    }
+}
