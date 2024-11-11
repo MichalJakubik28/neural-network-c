@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include "csv_to_img.h"
 
-#define LINE_MAX_SIZE img_size*img_size*4
+#define LINE_MAX_SIZE img_size * img_size * 4
 
 bool add_to_dataset(Image *image, Image ***dataset, int *dataset_max_size, int *dataset_cur_size) {
     if (*dataset_cur_size == *dataset_max_size) {
@@ -24,7 +24,7 @@ Image* parse_line(char *line, int img_size) {
     // TODO osetrit malloc
     img->label = -1;
     img->prediction = -1;
-    double *matrix = malloc(img_size*img_size*sizeof(double));
+    double *matrix = malloc((img_size * img_size + 1) * sizeof(double));
     // TODO osetrit malloc
 
     double cur_num = 0;
@@ -32,11 +32,12 @@ Image* parse_line(char *line, int img_size) {
     char *num_str = strtok(line, ",");
     while (num_str != NULL) {
         sscanf(num_str, "%lf", &cur_num);
-        matrix[num_total] = cur_num;
+        matrix[num_total] = cur_num / ((double) 255); // Normalize to [0,1]
         num_total++;
         num_str = strtok(NULL, ",");
     }
 
+    matrix[img_size * img_size] = 1; // bias neuron
     img->data = matrix;
     return img;
 }
@@ -63,7 +64,7 @@ Image** csv_to_imgs(char *path, int img_size, int *dataset_size) {
         fclose(fd);
     }
     int cur_char;
-    char *line = malloc(LINE_MAX_SIZE*sizeof(char));
+    char *line = malloc(LINE_MAX_SIZE * sizeof(char));
     if (line == NULL) {
         perror("Could not allocate enough memory for new image");
         free(dataset);
@@ -100,4 +101,31 @@ Image** csv_to_imgs(char *path, int img_size, int *dataset_size) {
     *dataset_size = dataset_cur_size;
     
     return dataset;
+}
+
+void parse_labels(char *path, Image **dataset, int dataset_size) {
+    FILE *fd = fopen(path, "r");
+    int cur_char;
+    int read = 0;
+    while ((cur_char = fgetc(fd)) != EOF) {
+        if (cur_char != '\n') {
+            if (read == dataset_size) {
+                printf("More labels than dataset size!\n");
+            }
+            dataset[read]->label = cur_char - 48;
+            read++;
+        }
+    }
+    fclose(fd);
+}
+
+void shuffle_dataset(Image **dataset, int dataset_size) {
+    for (int i = dataset_size - 1; i > 0; i--) {
+        // Generate a random index in the range [0, i]
+        int j = rand() % (i + 1);
+
+        Image *temp = dataset[i];
+        dataset[i] = dataset[j];
+        dataset[j] = temp;
+    }
 }
