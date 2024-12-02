@@ -1,93 +1,148 @@
-# PV021 Neural Network
+525062 Michal Jakubik
+## PV021 project -- Deep Learning from Scratch
 
+### DEADLINE
+Sunday 8. 12. 2024 23:59 (December 8th)
 
+### TASK
+  - Implement a neural network in a low-level programming language
+    (C/C++/Java/C#/Rust) without the use of advanced libraries or frameworks.
+  - Train it on the supplied Fashion-MNIST dataset using a backpropagation
+    algorithm.
 
-## Getting started
+### REQUIREMENTS
+  - Your solution must follow the project template and must be runnable on 
+    the Aura server (see details below).
+  - Your solution must achieve at least 88% accuracy on the test set.
+  - Your solution must finish within 10 minutes (parse inputs, train, 
+    evaluate, export results)
+  - Your solution must contain a runnable script called `run.sh` (not `run`,
+    not `RUN.sh`, not `run.exe` etc.), which compiles and executes your code 
+    (and exports the results).
+  - Your solution must output two files to the root project directory:
+    (next to `example_test_predictions.csv` file):
+     - `train_predictions.csv` - your network predictions for the train set.
+     - `test_predictions.csv`  - your network predictions for the test set.
+  - The format of these files has to be the same as the supplied 
+    training/testing labels: 
+     - One prediction per line.
+     - Prediction for i-th input vector (ordered by the input .csv file) 
+       must be on i-th line in the associated output file.
+     - Each prediction is a single integer 0 - 9.
+  - Replace the first line of this file with UČOs and names
+  - Submit your solution in a .zip format to a vault in IS before the deadline.
+    We will let you know once we create it.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### SCORING
+  - The project has binary scoring -- either you pass it or fail it. You must 
+    pass it to get your mark on the oral exam and pass the course.
+  - All submitted source files will be checked manually.
+  - All submitted solutions will also be checked by an automatic evaluator.
+    A simple evaluator is provided in the project template as well.
+  - All submitted solutions will be checked for plagiarism. Submitting someone
+    else's solution (including publicly available solutions) as your own will
+    result in failure and will lead to disciplinary action.
+  - Any implementation that uses testing input vectors for anything other than
+    final evaluation will result in failure.
+  - Use of high-level libraries allowing matrix operations, neural network
+    operations, differentiation operations, linear algebra operations etc., is
+    forbidden and will result in failure. (Low-level math operations: sqrt,
+    exp, log, rand... and libraries like `<algorithm>` or `<iostream>` are
+    fine)
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### DATASET
+Fashion MNIST (https://arxiv.org/pdf/1708.07747.pdf) - a modern version of a
+well-known MNIST (http://yann.lecun.com/exdb/mnist/). It is a dataset of
+Zalando's article images ‒ consisting of a training set of 60,000 examples
+and a test set of 10,000 examples. Each example is a 28x28 grayscale image,
+associated with a label from 10 classes. The dataset is in CSV format. There
+are four data files included:  
+ - `fashion_mnist_train_vectors.csv`   - training input vectors
+ - `fashion_mnist_test_vectors.csv`    - testing input vectors
+ - `fashion_mnist_train_labels.csv`    - training labels
+ - `fashion_mnist_test_labels.csv`     - testing labels
 
-## Add your files
+### REMARKS
+  - You can work alone, or you can make teams of two.
+  - You may or may not include the datasets in your .zip file; we will
+    replace them. Either way **keep the `data` folder in your solution**
+    and load all the datasets from it. 
+  - What you do internally with the training dataset is up to you.
+  - Write reasonable doc-strings.
+  - If you use fixed seeds, the only allowed values are 0, 1, 2, 3 or 42.
+  - Should you have any questions, ask them in the Discussion forum. 
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+### AURA
+  - Aura is a dedicated server for demanding computations. Please read
+    carefully the information here:
+    https://www.fi.muni.cz/tech/unix/aura.html.en)
+  - All students enrolled in this course have been granted access to Aura.
+    Please check it soon and let me know if you have any problems.
+  - Aura runs on the Red Hat Enterprise Linux operating system
+  - Aura has 128 physical cores
+  - Be considerate to others and run your network on Aura with decreased
+    priority using, for example, the `nice` program. (especially if you are
+    using multiple cores)
+    (more info here: https://www.fi.muni.cz/tech/unix/computation.html.en)
+  - If you are having a problem with missing compilers/maven on Aura, you can
+    add such tools by adding modules 
+    (https://www.fi.muni.cz/tech/unix/modules.html.en). Please note that
+    if your implementation requires such modules, your `run.sh` script must
+    also include them. Otherwise, the `run.sh` script won't work. Make sure
+    your solution does not require modules which you are adding to your
+    `.bashrc` file and which are not present in the `run.sh` file.
+  - (mainly) Windows users:
+    - `.exe` files are not runnable on Aura.
+    - Test your submission using the same zip file you are submitting to IS,
+      not just the cloned repository. GitHub automatically removes carriage
+      return characters (Windows new line) on Linux machines, but your zip
+      submission might still contain them, which means the RUN file fails. We
+      are trying to mitigate this by deleting them, but there are no guarantees
+      that it will work.
+    - you don't have to worry about the execution permissions required for the 
+      `run.sh` script, we add them automatically
 
-```
-cd existing_repo
-git remote add origin https://gitlab.fi.muni.cz/xjakubi2/pv021-neural-network.git
-git branch -M main
-git push -uf origin main
-```
+### TIPS
+  - Do not wait until the week (or even the month) before the deadline!
+  - Test your `run.sh` script from your .zip file on Aura before your
+    submission. Projects with missing or non-functional `run.sh` scripts cannot
+    be evaluated.
+  - Do NOT shuffle testing data. It won't fit expected predictions.
+  - Try to solve the XOR problem first. It is a benchmark for your training
+    algorithm because it is non-linear and requires at least one hidden layer.
+    The presented network solving XOR in the lecture is minimal and can be
+    hard to find, so use more neurons in the hidden layer. If you can't solve
+    the XOR problem, you can't solve Fashion-MNIST.
+  - Reuse memory. You are implementing an iterative process, so don't always 
+    allocate new vectors and matrices. An immutable approach is nice but
+    very inappropriate. Don't make unnecessary copies.
+  - Objects are fine, but be careful about the depth of the object hierarchy you
+    will create. Always remember that you are trying to be fast.
+  - Double precision is fine. You may try to use floats. Do not use BigDecimal
+    or any other high-precision objects.
+  - Don't forget to use compiler optimizations (e.g. -O3 or -Ofast)
+  - Simple SGD is most likely not fast enough. You will also need to
+    implement some more advanced features (or maybe not, but it's highly
+    recommended). You can add things like momentum, weight decay, and dropout,
+    or try to use advanced optimizers like RMSProp, AdaGrad or Adam.
+  - Start with smaller networks and increase network topology carefully.
+  - Consider validation of the model using part of the **training** dataset.
+  - Adjust hyperparameters to increase your internal validation accuracy.
+  - DO NOT WAIT UNTIL THE WEEK BEFORE THE DEADLINE!
 
-## Integrate with your tools
+### FAQ
+**Q:** Can I write in Python, please, please, pretty please?  
+**A:** No. It's too slow without matrix libraries.
+ 
+**Q:** Can I implement a convolutional neural network instead of the 
+    feed-forward neural network?  
+**A:** Yes, but it might be harder.
 
-- [ ] [Set up project integrations](https://gitlab.fi.muni.cz/xjakubi2/pv021-neural-network/-/settings/integrations)
+**Q:** Can I use attention?  
+**A:** Yes, but it might be much harder.
 
-## Collaborate with your team
+Best luck with the project!
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Tomáš Foltýnek
+4374@mail.muni.cz
+PV021 Neural Networks

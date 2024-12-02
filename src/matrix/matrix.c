@@ -124,7 +124,7 @@ void matrix_transpose(Matrix *matrix, Matrix *out) {
 
 void matrix_multiply(Matrix *a, Matrix *b, Matrix *out) {
     // Parallelize the outermost loop using OpenMP
-    #pragma omp parallel for collapse(2) shared(a, b, out)
+    #pragma omp parallel for collapse(2) shared(a, b, out) num_threads(16)
     for (int i = 0; i < out->rows; i++) {
         for (int j = 0; j < out->cols; j++) {
             out->data[i][j] = 0;

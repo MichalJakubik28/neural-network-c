@@ -9,10 +9,10 @@
 #define HALVE_LR_AFTER_EPOCHS 10
 #define LR_DECAY 0.925
 #define INPUT 784
-#define HIDDEN 512
-#define HIDDEN2 256
+#define HIDDEN 256
+#define HIDDEN2 128
 #define OUTPUT 10
-#define EPOCHS 20000
+#define EPOCHS 10000
 #define BATCH_SIZE 256
 #define VALID_AFTER 100
 #define VALID_BATCH_SIZE 10000
@@ -99,15 +99,92 @@ double validation_epoch(Matrix *input, Matrix *hidden, Matrix *hidden2, Matrix *
     return correct / ((double) VALID_BATCH_SIZE);
 }
 
+void predict(char *vectors, char* predict_out, Matrix *hidden, Matrix *hidden2, Matrix *output) {
+    FILE *out = fopen(predict_out, "wb");
+    
+    int dataset_size;
+    Image **dataset = csv_to_imgs(vectors, 28, &dataset_size);
+
+    Matrix *input = matrix_create(dataset_size, INPUT + 1);
+    for (int i = 0; i < dataset_size; i++) {
+        int index = i;
+        input->data[i] = dataset[index]->data;
+    }
+
+    Matrix *hidden_out = matrix_create(dataset_size, hidden->rows + 1);
+    Matrix *hidden_out_relu = matrix_create(dataset_size, hidden->rows + 1);
+    Matrix *hidden2_out = matrix_create(dataset_size, hidden2->rows + 1);
+    Matrix *hidden2_out_relu = matrix_create(dataset_size, hidden2->rows + 1);
+    Matrix *output_out = matrix_create(dataset_size, output->rows);
+    Matrix *output_sm = matrix_create(dataset_size, output->rows);
+
+    Matrix *hidden_transposed = matrix_create(hidden->cols, hidden->rows);
+    Matrix *hidden2_transposed = matrix_create(hidden2->cols, hidden2->rows);
+    Matrix *output_transposed = matrix_create(output->cols, output->rows);
+
+    // FORWARD PASS
+    // evaluate hidden layer
+    matrix_transpose(hidden, hidden_transposed);
+    matrix_multiply(input, hidden_transposed, hidden_out);
+    matrix_apply(hidden_out, relu, hidden_out_relu);
+
+    // set value of bias neurons for next layer to 1 
+    for (int i = 0; i < dataset_size; i++) {
+        hidden_out_relu->data[i][hidden->rows] = 1;
+    }
+
+    // evaluate second hidden layer
+    matrix_transpose(hidden2, hidden2_transposed);
+    matrix_multiply(hidden_out_relu, hidden2_transposed, hidden2_out);
+    matrix_apply(hidden2_out, relu, hidden2_out_relu);
+
+    // set value of bias neurons for next layer to 1 
+    for (int i = 0; i < dataset_size; i++) {
+        hidden2_out_relu->data[i][hidden2->rows] = 1;
+    }
+
+    matrix_transpose(output, output_transposed);
+    matrix_multiply(hidden2_out_relu, output_transposed, output_out);
+    
+    matrix_apply_row_wise(output_out, output_sm, softmax);
+
+    for (int i = 0; i < dataset_size; i++) {
+        int category = 0;
+        double max_score = 0;
+        for (int j = 0; j < output->rows; j++) {
+            if (output_sm->data[i][j] > max_score) {
+                category = j;
+                max_score = output_sm->data[i][j];
+            }
+        }
+        fprintf(out, "%d\n", category, max_score);
+        fflush(out);
+    }
+
+    matrix_free(hidden_out);
+    matrix_free(hidden_out_relu);
+    matrix_free(hidden2_out);
+    matrix_free(hidden2_out_relu);
+    matrix_free(output_out);
+    matrix_free(output_sm);
+    matrix_free(hidden_transposed);
+    matrix_free(hidden2_transposed);
+    matrix_free(output_transposed);
+
+    free_dataset(dataset, dataset_size);
+
+    fclose(out);
+}
+
 int main() {
-    FILE *fd_err = fopen("../out/error_values.txt", "wb");
-    FILE *fd_valid = fopen("../out/valid_values.txt", "wb");
+    FILE *fd_err = fopen("out/error_values.txt", "wb");
+    FILE *fd_valid = fopen("out/valid_values.txt", "wb");
 
     // srand(42);
     srand(time(NULL));
     int dataset_size;
-    Image **dataset = csv_to_imgs("../data/fashion_mnist_train_vectors.csv", 28, &dataset_size);
-    parse_labels("../data/fashion_mnist_train_labels.csv", dataset, dataset_size);
+    Image **dataset = csv_to_imgs("data/fashion_mnist_train_vectors.csv", 28, &dataset_size);
+    parse_labels("data/fashion_mnist_train_labels.csv", dataset, dataset_size);
     // int image_num = (int) (rand()/RAND_MAX * 9);
     // int image_num = 59999;
     // print_matrix(dataset[image_num]->data, 28);
@@ -250,7 +327,7 @@ int main() {
         // matrix_print(output_bp_neuron);
 
         // calculate error gradient for output weights
-        #pragma omp parallel for collapse(2) shared(output, output_backprop_weight)
+        #pragma omp parallel for collapse(2) shared(output, output_backprop_weight) num_threads(16)
         for (int i = 0; i < BATCH_SIZE; i++) {
             for (int j = 0; j < output->rows; j++) {
                 for (int k = 0; k < output->cols; k++) {
@@ -262,7 +339,7 @@ int main() {
         // matrix_print(output_backprop_weight);
 
         // calculate error gradient for second hidden neurons
-        #pragma omp parallel for collapse(2) shared(hidden2, hidden2_bp_neuron)
+        #pragma omp parallel for collapse(2) shared(hidden2, hidden2_bp_neuron) num_threads(16)
         for (int i = 0; i < BATCH_SIZE; i++) {
             for (int j = 0; j < hidden2->rows; j++) {
                 hidden2_bp_neuron->data[i][j] = 0;
@@ -276,7 +353,7 @@ int main() {
 
         // calculate error gradient for second hidden weights
         double tmp;
-        #pragma omp parallel for collapse(2) shared(hidden2, tmp, hidden2_backprop_weight)
+        #pragma omp parallel for collapse(2) shared(hidden2, tmp, hidden2_backprop_weight) num_threads(16)
         for (int i = 0; i < BATCH_SIZE; i++) {
             for (int j = 0; j < hidden2->rows; j++) {
                 for (int k = 0; k < hidden2->cols; k++) {
@@ -287,7 +364,7 @@ int main() {
         }
 
         // calculate error gradient for hidden neurons
-        #pragma omp parallel for collapse(2) shared(hidden, hidden_bp_neuron)
+        #pragma omp parallel for collapse(2) shared(hidden, hidden_bp_neuron) num_threads(16)
         for (int i = 0; i < BATCH_SIZE; i++) {
             for (int j = 0; j < hidden->rows; j++) {
                 hidden_bp_neuron->data[i][j] = 0;
@@ -300,7 +377,7 @@ int main() {
         // matrix_print(hidden_bp_neuron);
 
         // calculate error gradient for hidden weights
-        #pragma omp parallel for collapse(2) shared(hidden, hidden_backprop_weight)
+        #pragma omp parallel for collapse(2) shared(hidden, hidden_backprop_weight) num_threads(16)
         for (int i = 0; i < BATCH_SIZE; i++) {
             for (int j = 0; j < hidden->rows; j++) {
                 for (int k = 0; k < hidden->cols; k++) {
@@ -361,7 +438,13 @@ int main() {
     fclose(fd_err);
     fclose(fd_valid);
     free_dataset(dataset, dataset_size);
+    // matrix_free(input_batch);
+    // matrix_free(inputs_valid);
+    // matrix_free(hi);
+    // matrix_free();
 
+    predict("data/fashion_mnist_test_vectors.csv", "test_predictions.csv", hidden, hidden2, output);
+    predict("data/fashion_mnist_train_vectors.csv", "train_predictions.csv", hidden, hidden2, output);
 }
 
 // general TODOs:
