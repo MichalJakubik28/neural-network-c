@@ -1,1 +1,0 @@
-void vec_apply(double *vec, double (*func)(double), double *out, int size);

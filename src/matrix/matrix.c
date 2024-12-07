@@ -1,16 +1,4 @@
-#include <stdio.h>
-#include "../weight_ops/weight_ops.h"
-#include <stdlib.h>
-#include <string.h>
-
-void print_matrix(double *matrix, int img_size) {
-    for (int i = 0; i < img_size*img_size; i++) {
-        if (i % (img_size) == 0) {
-            putc('\n', stdout);
-        }
-        printf("%s%f ", matrix[i] >= 100 ? "" : matrix[i] >= 10 ? " " : "  ", (int) matrix[i]);
-    }
-}
+#include "matrix.h"
 
 void matrix_print(Matrix *matrix) {
     for (int i = 0; i < matrix->rows; i++) {
@@ -110,21 +98,8 @@ void matrix_transpose(Matrix *matrix, Matrix *out) {
     }
 }
 
-// void matrix_multiply(Matrix *a, Matrix *b, Matrix *out) {
-//     for (int i = 0; i < out->rows; i++) {
-//         for (int j = 0; j < out->cols; j++) {
-//             out->data[i][j] = 0;
-//             for (int k = 0; k < a->cols; k++) {
-//                 double tmp = a->data[i][k] * b->data[k][j];
-//                 out->data[i][j] += tmp;
-//             }
-//         }
-//     }
-// }
-
 void matrix_multiply(Matrix *a, Matrix *b, Matrix *out) {
-    // Parallelize the outermost loop using OpenMP
-    #pragma omp parallel for collapse(2) shared(a, b, out) num_threads(16)
+    #pragma omp parallel for collapse(2) shared(out) num_threads(16)
     for (int i = 0; i < out->rows; i++) {
         for (int j = 0; j < out->cols; j++) {
             out->data[i][j] = 0;

@@ -1,6 +1,5 @@
-#include <stdio.h>
-#include <stdbool.h>
 #include "csv_to_img.h"
+#include <unistd.h>
 
 #define LINE_MAX_SIZE img_size * img_size * 4
 
@@ -81,7 +80,7 @@ Image** csv_to_imgs(char *path, int img_size, int *dataset_size) {
                 free_dataset(dataset, dataset_cur_size);
             }
             read_chars = 0;
-            printf("added image no. %d\n", dataset_cur_size);
+            // printf("added image no. %d\n", dataset_cur_size);
         } else {
             line[read_chars] = cur_char;
             read_chars++;
@@ -117,6 +116,12 @@ void parse_labels(char *path, Image **dataset, int dataset_size) {
         }
     }
     fclose(fd);
+}
+
+void shallow_copy_dataset(Image **src, Image **dest, int dataset_size) {
+    for (int i = 0; i < dataset_size; i++) {
+        dest[i] = src[i];
+    }
 }
 
 void shuffle_dataset(Image **dataset, int dataset_size) {

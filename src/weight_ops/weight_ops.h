@@ -1,4 +1,9 @@
+#ifndef MATRIX_H
+#define MATRIX_H
 #include "../matrix/matrix.h"
+#endif
+#include <math.h>
+#include <stdlib.h>
 
 double relu(double input);
 double relu_prime(double input);

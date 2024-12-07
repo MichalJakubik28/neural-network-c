@@ -1,5 +1,3 @@
-#include <math.h>
-#include <stdlib.h>
 #include "weight_ops.h"
 
 double relu(double input) {
