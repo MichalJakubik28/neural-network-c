@@ -9,7 +9,7 @@
 #define VALID_BATCH_SIZE 10000
 #define VALID_SIZE 10000
 #define MOMENTUM 0.9
-#define MOMENTUM_DECAY 0.99
+#define MOMENTUM_DECAY 1
 
 Network* network_create(int *layers, enum Activation *activations, int layer_count) {
     Network *network = (Network *) malloc(sizeof(Network));

@@ -12,6 +12,7 @@
 #include "network/network.h"
 
 int main() {
+    // Parsing training dataset
     srand(time(NULL));
     printf("Parsing training dataset");
     fflush(stdout);
@@ -19,22 +20,26 @@ int main() {
     Image **train_dataset = csv_to_imgs("data/fashion_mnist_train_vectors.csv", 28, &dataset_size);
     parse_labels("data/fashion_mnist_train_labels.csv", train_dataset, dataset_size);
 
+    // Shuffling training dataset
     Image **train_dataset_shuffled = malloc(dataset_size*sizeof(Image*));
     shallow_copy_dataset(train_dataset, train_dataset_shuffled, dataset_size);
     shuffle_dataset(train_dataset_shuffled, dataset_size);
     printf(" - OK\n");
     fflush(stdout);
 
+    // Network config
     int layers[] = {784, 256, 10};
     enum Activation activations[] = {RELU, SOFTMAX};
 
     Network *network = network_create(layers, activations, 2);
     Network *best_model = network_create(layers, activations, 2);
 
+    // Training
     printf("Training...\n\n");
     fflush(stdout);
     network_train(network, best_model, train_dataset_shuffled, dataset_size);
 
+    // Prediction
     printf("\nPredicting training dataset");
     fflush(stdout);
     network_predict(best_model, train_dataset, dataset_size, "train_predictions.csv");
