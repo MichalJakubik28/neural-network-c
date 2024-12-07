@@ -13,7 +13,7 @@
 
 int main() {
     srand(time(NULL));
-    printf("Parsing traning dataset");
+    printf("Parsing training dataset");
     fflush(stdout);
     int dataset_size;
     Image **train_dataset = csv_to_imgs("data/fashion_mnist_train_vectors.csv", 28, &dataset_size);

@@ -3,7 +3,7 @@
 #define LR 0.1
 #define HALVE_LR_AFTER_EPOCHS 10
 #define LR_DECAY 0.95
-#define EPOCHS 100
+#define EPOCHS 50
 #define BATCH_SIZE 256
 #define VALID_AFTER_EPOCHS 1
 #define VALID_BATCH_SIZE 10000
