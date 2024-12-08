@@ -1,5 +1,6 @@
 #include "matrix.h"
 
+/*Print matrix to stdout.*/
 void matrix_print(Matrix *matrix) {
     for (int i = 0; i < matrix->rows; i++) {
         for (int j = 0; j < matrix->cols; j++) {
@@ -9,6 +10,7 @@ void matrix_print(Matrix *matrix) {
     }
 }
 
+/*Create a matrix with given number of rows and cols.*/
 Matrix* matrix_create(int rows, int cols) {
     Matrix *matrix = malloc(sizeof(Matrix));
     if (matrix == NULL) {
@@ -37,6 +39,7 @@ Matrix* matrix_create(int rows, int cols) {
     return matrix;
 }
 
+/*Free the given matrix.*/
 void matrix_free(Matrix *matrix) {
     for (int i = 0; i < matrix->rows; i++) {
         free(matrix->data[i]);
@@ -64,6 +67,7 @@ void matrix_dot(double *vec, Matrix *matrix, double *out) {
     }
 }
 
+/*Add two matrices together and store result in <out>*/
 void matrix_add(Matrix *a, Matrix *b, Matrix *out) {
     if (a->cols != b->cols || a->rows != b->rows) {
         printf("matrices sizes do not match!\n");
@@ -76,6 +80,7 @@ void matrix_add(Matrix *a, Matrix *b, Matrix *out) {
     }
 }
 
+/*Multiply elements in matrix by constant.*/
 void matrix_multiply_by_constant(Matrix *matrix, double constant) {
     for (int i = 0; i < matrix->rows; i++) {
         for (int j = 0; j < matrix->cols; j++) {
@@ -84,12 +89,14 @@ void matrix_multiply_by_constant(Matrix *matrix, double constant) {
     }
 }
 
+/*Set values in <matrix> to <value>.*/
 void matrix_set(Matrix *matrix, double value) {
     for (int i = 0; i < matrix->rows; i++) {
         memset(matrix->data[i], value, matrix->cols * sizeof(double));
     }
 }
 
+/*Transpose <matrix> and store result in <out>.*/
 void matrix_transpose(Matrix *matrix, Matrix *out) {
     for (int i = 0; i < matrix->rows; i++) {
         for (int j = 0; j < matrix->cols; j++) {
@@ -98,6 +105,7 @@ void matrix_transpose(Matrix *matrix, Matrix *out) {
     }
 }
 
+/*Multiply two matrices, store result in <out>*/
 void matrix_multiply(Matrix *a, Matrix *b, Matrix *out) {
     #pragma omp parallel for collapse(2) shared(out) num_threads(16)
     for (int i = 0; i < out->rows; i++) {
@@ -110,12 +118,14 @@ void matrix_multiply(Matrix *a, Matrix *b, Matrix *out) {
     }
 }
 
+/*Apply function to all rows of a matrix, store result in <out>.*/
 void matrix_apply_row_wise(Matrix *matrix, Matrix *out, void (*func)(double*, double*, int)) {
     for (int i = 0; i < matrix->rows; i++) {
         func(matrix->data[i], out->data[i], matrix->cols);
     }
 }
 
+/*Copy <src> matrix to <dest>.*/
 void matrix_copy(Matrix *src, Matrix *dest) {
     if (src->rows != dest->rows || src->cols != dest->cols) {
         printf("Cannot copy, sizes of matrices do not match.");

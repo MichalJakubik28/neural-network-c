@@ -14,7 +14,7 @@
 int main() {
     // Parsing training dataset
     srand(time(NULL));
-    printf("Parsing training dataset");
+    printf("Parsing training dataset\n");
     fflush(stdout);
     int dataset_size;
     Image **train_dataset = csv_to_imgs("data/fashion_mnist_train_vectors.csv", 28, &dataset_size);
@@ -24,8 +24,6 @@ int main() {
     Image **train_dataset_shuffled = malloc(dataset_size*sizeof(Image*));
     shallow_copy_dataset(train_dataset, train_dataset_shuffled, dataset_size);
     shuffle_dataset(train_dataset_shuffled, dataset_size);
-    printf(" - OK\n");
-    fflush(stdout);
 
     // Network config
     int layers[] = {784, 256, 10};
@@ -62,4 +60,5 @@ int main() {
 
 // Known issues:
 // 1. Some memory is not freed
-// 2. Some variables should be updated atomically but are not because of speed
+// 2. Error handling is practically non-existent
+// 3. Some variables should be updated atomically but are not because of speed

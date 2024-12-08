@@ -26,10 +26,6 @@ Network* network_create(int *layers, enum Activation *activations, int layer_cou
     return network;
 }
 
-// void network_free(Network *network) {
-//     free(network->activations);
-//     free(network->)
-// }
 // double compute_error(Matrix *matrix, Matrix *labels, double *out) {
 //     double total_err = 0;
 //     for (int i = 0; i < matrix->rows; i++) {
@@ -67,7 +63,6 @@ void network_predict(Network *network, Image **dataset, int dataset_size, char* 
                 layers_activations[i] = matrix_create(dataset_size, network->layers[i]->rows + 1);
                 break;
             case SOFTMAX:
-            // TODO: skontrolovat ci nie su prehodene cols a rows
                 layers_outputs[i] = matrix_create(dataset_size, network->layers[i]->rows);
                 layers_activations[i] = matrix_create(dataset_size, network->layers[i]->rows);
                 break;
@@ -136,7 +131,6 @@ double network_validate(Network *network, Matrix *valid_input, Matrix *labels) {
                 layers_activations[i] = matrix_create(VALID_BATCH_SIZE, network->layers[i]->rows + 1);
                 break;
             case SOFTMAX:
-            // TODO: skontrolovat ci nie su prehodene cols a rows
                 layers_outputs[i] = matrix_create(VALID_BATCH_SIZE, network->layers[i]->rows);
                 layers_activations[i] = matrix_create(VALID_BATCH_SIZE, network->layers[i]->rows);
                 break;
@@ -196,10 +190,6 @@ double network_validate(Network *network, Matrix *valid_input, Matrix *labels) {
 }
 
 void network_train(Network *network, Network *best_model, Image **dataset, int dataset_size) {
-    // error and validation scores for graphing
-    // FILE *fd_err = fopen("../out/error_values.txt", "wb");
-    // FILE *fd_valid = fopen("out/valid_values.txt", "wb");
-
     Matrix **layers_transposed = (Matrix **) malloc(network->layer_count * sizeof(Matrix*));
     Matrix **layers_outputs = (Matrix **) malloc(network->layer_count * sizeof(Matrix*));
     Matrix **layers_activations = (Matrix **) malloc(network->layer_count * sizeof(Matrix*));
@@ -221,7 +211,6 @@ void network_train(Network *network, Network *best_model, Image **dataset, int d
                 layers_activations[i] = matrix_create(BATCH_SIZE, network->layers[i]->rows + 1);
                 break;
             case SOFTMAX:
-            // TODO: skontrolovat ci nie su prehodene cols a rows
                 glorot_init(network->layers[i], network->layers[i]->cols, network->layers[i]->rows); // Uniform Glorot init for regular layers
                 layers_outputs[i] = matrix_create(BATCH_SIZE, network->layers[i]->rows);
                 layers_activations[i] = matrix_create(BATCH_SIZE, network->layers[i]->rows);
@@ -247,9 +236,12 @@ void network_train(Network *network, Network *best_model, Image **dataset, int d
                 printf("-");
                 fflush(stdout);
             }
+
+            // setting array of weights in backprop to 0, other arrays are overwritten
             for (int i = 0; i < network->layer_count; i++) {
                 matrix_set(layers_backprop_weights[i], 0);
             }
+
             // batch init
             for (int i = 0; i < BATCH_SIZE; i++) { // SGD
                 int index = (i + last_used_image) % (dataset_size - VALID_SIZE);
@@ -291,59 +283,63 @@ void network_train(Network *network, Network *best_model, Image **dataset, int d
             // GD - backprop
             for (int layer = network->layer_count - 1; layer >= 0; layer--) {
                 Matrix *previous_layer = (layer == 0) ? input_batch : layers_activations[layer - 1];
-                // error gradient for RELU layers
-                if (network->activations[layer] == RELU) {
-                    // calculate error gradient for neurons
-                    #pragma omp parallel for collapse(2) num_threads(16)
-                    for (int i = 0; i < BATCH_SIZE; i++) {
-                        for (int j = 0; j < network->layers[layer]->rows; j++) {
-                            layers_backprop_neurons[layer]->data[i][j] = 0;
-                            for (int k = 0; k < network->layers[layer+1]->rows; k++) {
-                                // sacrificed atomicity for speed :(
-                                // #pragma omp atomic
-                                layers_backprop_neurons[layer]->data[i][j] += layers_backprop_neurons[layer+1]->data[i][k] * network->layers[layer+1]->data[k][j];
+                switch (network->activations[layer]) {
+                    // error gradient for RELU layers
+                    case RELU:
+                        // calculate error gradient for neurons
+                        #pragma omp parallel for collapse(2) num_threads(16)
+                        for (int i = 0; i < BATCH_SIZE; i++) {
+                            for (int j = 0; j < network->layers[layer]->rows; j++) {
+                                layers_backprop_neurons[layer]->data[i][j] = 0;
+                                for (int k = 0; k < network->layers[layer+1]->rows; k++) {
+                                    // sacrificed atomicity for speed :(
+                                    // #pragma omp atomic
+                                    layers_backprop_neurons[layer]->data[i][j] += layers_backprop_neurons[layer+1]->data[i][k] * network->layers[layer+1]->data[k][j];
+                                }
                             }
                         }
-                    }
 
-                    // calculate error gradient for weights
-                    #pragma omp parallel for collapse(2) num_threads(16)
-                    for (int i = 0; i < BATCH_SIZE; i++) {
-                        for (int j = 0; j < network->layers[layer]->rows; j++) {
-                            for (int k = 0; k < network->layers[layer]->cols; k++) {
-                                // #pragma omp atomic
-                                layers_backprop_weights[layer]->data[j][k] += layers_backprop_neurons[layer]->data[i][j] * (layers_outputs[layer]->data[i][j] > 0) * previous_layer->data[i][k];
+                        // calculate error gradient for weights
+                        #pragma omp parallel for collapse(2) num_threads(16)
+                        for (int i = 0; i < BATCH_SIZE; i++) {
+                            for (int j = 0; j < network->layers[layer]->rows; j++) {
+                                for (int k = 0; k < network->layers[layer]->cols; k++) {
+                                    // #pragma omp atomic
+                                    layers_backprop_weights[layer]->data[j][k] += layers_backprop_neurons[layer]->data[i][j] * (layers_outputs[layer]->data[i][j] > 0) * previous_layer->data[i][k];
+                                }
                             }
                         }
-                    }
-                }
-                // error gradient for softmax layers
-                else if (network->activations[layer] == SOFTMAX) {
-                    // here it is expected that the softmax is also the last layer
+                        break;
                     
-                    // calculate error gradient for neurons
-                    for (int i = 0; i < BATCH_SIZE; i++) {
-                        for (int j = 0; j < network->layers[layer]->rows; j++) {
-                            layers_backprop_neurons[layer]->data[i][j] = layers_activations[layer]->data[i][j] - (label_batch->data[i][0] == j ? 1 : 0); //SM_i - d_i
-                        }
-                    }
-
-                    // calculate error gradient for weights
-                    #pragma omp parallel for collapse(2) num_threads(16)
-                    for (int i = 0; i < BATCH_SIZE; i++) {
-                        for (int j = 0; j < network->layers[layer]->rows; j++) {
-                            for (int k = 0; k < network->layers[layer]->cols; k++) {
-                                // #pragma omp atomic
-                                layers_backprop_weights[layer]->data[j][k] += layers_backprop_neurons[layer]->data[i][j] * previous_layer->data[i][k];
+                    // error gradient for softmax layers
+                    case SOFTMAX:
+                        // here it is expected that the softmax is also the last layer
+                        
+                        // calculate error gradient for neurons
+                        for (int i = 0; i < BATCH_SIZE; i++) {
+                            for (int j = 0; j < network->layers[layer]->rows; j++) {
+                                layers_backprop_neurons[layer]->data[i][j] = layers_activations[layer]->data[i][j] - (label_batch->data[i][0] == j ? 1 : 0); //SM_i - d_i
                             }
                         }
-                    }
+
+                        // calculate error gradient for weights
+                        #pragma omp parallel for collapse(2) num_threads(16)
+                        for (int i = 0; i < BATCH_SIZE; i++) {
+                            for (int j = 0; j < network->layers[layer]->rows; j++) {
+                                for (int k = 0; k < network->layers[layer]->cols; k++) {
+                                    // #pragma omp atomic
+                                    layers_backprop_weights[layer]->data[j][k] += layers_backprop_neurons[layer]->data[i][j] * previous_layer->data[i][k];
+                                }
+                            }
+                        }
+                        break;
                 }
             }
 
             // LR computation
             double constant = -LR * pow(LR_DECAY, epoch) * (1/((float) BATCH_SIZE));
 
+            // one step of gradient descent - multiply gradient by -LR, add momentum and add to current weights
             for (int i = 0; i < network->layer_count; i++) {
                 matrix_multiply_by_constant(layers_backprop_weights[i], constant);
 
@@ -353,8 +349,6 @@ void network_train(Network *network, Network *best_model, Image **dataset, int d
                 }
                 matrix_copy(layers_backprop_weights[i], layers_momentum[i]);
                 matrix_multiply_by_constant(layers_momentum[i], MOMENTUM * pow(MOMENTUM_DECAY, epoch));
-
-                // one step of gradient descent
                 matrix_add(network->layers[i], layers_backprop_weights[i], network->layers[i]);
             }
         }
@@ -379,12 +373,8 @@ void network_train(Network *network, Network *best_model, Image **dataset, int d
                     matrix_copy(network->layers[i], best_model->layers[i]);
                 }
             }
-            // fprintf(fd_valid, "%.10f\n", valid_score);
-            // fflush(fd_valid);
         }
     }
-    // fclose(fd_err);
-    // fclose(fd_valid);
 
     for (int i = 0; i < network->layer_count; i++) {
         matrix_free(layers_transposed[i]);

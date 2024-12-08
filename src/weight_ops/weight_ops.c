@@ -5,7 +5,7 @@ double relu(double input) {
 }
 
 double relu_prime(double input) {
-    return input <= 0 ? 0 : 1;
+    return input > 0;
 }
 
 void softmax(double *vec, double *out, int size) {
@@ -23,7 +23,6 @@ void he_init(Matrix *layer, int n_in) {
     for (int i = 0; i < layer->rows; i++) {
         for (int j = 0; j < layer->cols; j++)
             layer->data[i][j] = stddev * ((double)rand() / RAND_MAX * 2 - 1); // Uniform around 0
-            // layer->data[i][j] = 0.001;
     }
 }
 
@@ -32,7 +31,6 @@ void glorot_init(Matrix *layer, int n_in, int n_out) {
     for (int i = 0; i < layer->rows; i++) {
         for (int j = 0; j < layer->cols; j++) {
             layer->data[i][j] = ((double)rand() / RAND_MAX) * 2 * limit - limit; // Uniform in [-limit, limit]
-            // layer->data[i][j] = 0.001;
         }
     }
 }
