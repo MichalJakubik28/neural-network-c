@@ -1,3 +1,7 @@
+Neural network written in C, without any high-level libraries allowing matrix operations, neural network operations, differentiation operations, linear algebra operations etc. Just plain old math.h :)
+
+This repository is a project implementation for the PV021 Neural Networks at FI MUNI. Following is the assignment:
+
 525062 Michal Jakubik
 ## PV021 project -- Deep Learning from Scratch
 
