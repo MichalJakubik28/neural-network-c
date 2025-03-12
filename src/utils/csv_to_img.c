@@ -20,11 +20,9 @@ bool add_to_dataset(Image *image, Image ***dataset, int *dataset_max_size, int *
 
 Image* parse_line(char *line, int img_size) {
     Image *img = malloc(sizeof(Image));
-    // TODO osetrit malloc
     img->label = -1;
     img->prediction = -1;
     double *matrix = malloc((img_size * img_size + 1) * sizeof(double));
-    // TODO osetrit malloc
 
     double cur_num = 0;
     int num_total = 0;
@@ -80,12 +78,17 @@ Image** csv_to_imgs(char *path, int img_size, int *dataset_size) {
                 free_dataset(dataset, dataset_cur_size);
             }
             read_chars = 0;
-            // printf("added image no. %d\n", dataset_cur_size);
+            if (dataset_cur_size % 1000 == 0) {
+                putchar(13);
+                printf("Loaded images: %d", dataset_cur_size);
+                fflush(stdout);
+            }
         } else {
             line[read_chars] = cur_char;
             read_chars++;
         }
     }
+    printf(" - OK\n");
 
     if (read_chars != 0) {
         Image *img = parse_line(line, img_size);
@@ -126,7 +129,6 @@ void shallow_copy_dataset(Image **src, Image **dest, int dataset_size) {
 
 void shuffle_dataset(Image **dataset, int dataset_size) {
     for (int i = dataset_size - 1; i > 0; i--) {
-        // Generate a random index in the range [0, i]
         int j = rand() % (i + 1);
 
         Image *temp = dataset[i];
